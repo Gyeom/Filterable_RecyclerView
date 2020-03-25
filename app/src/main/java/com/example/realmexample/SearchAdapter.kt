@@ -28,7 +28,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.realmexample.R
 import com.example.realmexample.SearchVo
 import kotlinx.android.synthetic.main.item_recyclerview_textview.view.*
-import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -36,13 +35,12 @@ import java.util.*
 class SearchAdapter(items: MutableList<SearchVo>) : RecyclerView.Adapter<RecyclerView.ViewHolder>(),
     Filterable {
 
-    var unFilteredlist: MutableList<SearchVo>
+    var unFilteredList: MutableList<SearchVo> = items
     var filteredList: MutableList<SearchVo>
 
     var currentText = ""
 
     init {
-        unFilteredlist = items
         filteredList = items
     }
 
@@ -54,28 +52,27 @@ class SearchAdapter(items: MutableList<SearchVo>) : RecyclerView.Adapter<Recycle
                 currentText = charString
 
                 filteredList = when (charString.isEmpty()) {
-                    true -> unFilteredlist
+                    true -> unFilteredList
                     false -> {
-                        unFilteredlist
+                        unFilteredList
                             .filter { (it.recentSearchWord.toLowerCase()).contains(charString.toLowerCase()) }
                             .toMutableList()
                     }
                 }
-                val filterResults = FilterResults()
-                filterResults.values = filteredList
-                filterResults.count = filteredList.size
-                return filterResults
+
+                return FilterResults().apply {
+                    this.values = filteredList
+                    this.count = filteredList.size
+                }
             }
 
             override fun publishResults(
                 constraint: CharSequence,
                 results: FilterResults
             ) {
-                if (results.values != null) {
-                    filteredList = (results.values) as MutableList<SearchVo>
+                results.values?.let {
+                    filteredList = it as MutableList<SearchVo>
                     notifyDataSetChanged()
-                } else {
-
                 }
             }
         }
@@ -99,7 +96,7 @@ class SearchAdapter(items: MutableList<SearchVo>) : RecyclerView.Adapter<Recycle
 
     }
 
-    fun getItem(position: Int): SearchVo {
+    private fun getItem(position: Int): SearchVo {
         return filteredList[position]
     }
 
@@ -112,22 +109,21 @@ class SearchAdapter(items: MutableList<SearchVo>) : RecyclerView.Adapter<Recycle
         itemView: View
     ) : RecyclerView.ViewHolder(itemView) {
 
-        val textViewSearchWord = itemView.textViewRecentSearchWord
-        val textViewWriteAt = itemView.textViewWriteAt
-        init {
+        private val textViewSearchWord = itemView.textViewRecentSearchWord
+        private val textViewWriteAt = itemView.textViewWriteAt
 
-        }
+//        init {
+//
+//        }
 
         fun bindData(item: SearchVo) {
-            val recentSearchWord = item.recentSearchWord
-//            val writeAt = DateFormat.getDateInstance(DateFormat.FULL).format(item.writeAt)
-             val writeAt = SimpleDateFormat("E MMM dd HH:mm:ss").format(item.writeAt)
-//            textViewSearchWord.text = item
+            val recentSearchWord : String = item.recentSearchWord
+            val writeAt : String = SimpleDateFormat("E MMM dd HH:mm:ss", Locale.KOREA).format(item.writeAt)
             val spannableStringBuilder = SpannableStringBuilder(item.recentSearchWord)
 
             var indexStart: Int = recentSearchWord.indexOf(currentText)
-            while (indexStart >= 0 && currentText != "") {
-                val indexEnd = indexStart + currentText.length
+            while (indexStart >= 0 && currentText.isNotEmpty()) {
+                val indexEnd : Int = indexStart + currentText.length
                 spannableStringBuilder.setSpan(
                     ForegroundColorSpan(Color.RED),
                     indexStart,
@@ -138,19 +134,6 @@ class SearchAdapter(items: MutableList<SearchVo>) : RecyclerView.Adapter<Recycle
             }
             textViewSearchWord.text = spannableStringBuilder
             textViewWriteAt.text = writeAt
-
-//
-//            val spannableStringBuilder  = SpannableStringBuilder(item)
-//
-//            if(item.contains(currentText)&&currentText!=""){
-//                val indexStart= item.indexOf(currentText)
-//                val indexEnd = indexStart + currentText.length
-//                spannableStringBuilder.setSpan(ForegroundColorSpan(Color.RED), indexStart, indexEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-//                textViewSearchWord.text = spannableStringBuilder
-//            }else{
-//                textViewSearchWord.text = item
-//            }
-
         }
     }
 }
