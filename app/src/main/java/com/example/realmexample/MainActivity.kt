@@ -3,6 +3,7 @@ package com.example.realmexample
 import SearchAdapter
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.SearchView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -10,11 +11,12 @@ import io.realm.Realm
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.Sort
+import io.realm.kotlin.delete
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), OnDeleteItemClickedListener {
 
     private lateinit var items: MutableList<SearchVo>
     private lateinit var realm: Realm
@@ -32,7 +34,7 @@ class MainActivity : AppCompatActivity() {
         realm.commitTransaction()
 
 
-        recyclerViewSearch.adapter = SearchAdapter(items)
+        recyclerViewSearch.adapter = SearchAdapter(items, this)
         recyclerViewSearch.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
 
@@ -66,14 +68,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateAdapterItems(addItem: SearchVo) {
-
+    private fun updateAdapterItems() {
         items = selectSearchVos()
 
         val adapter: SearchAdapter = (recyclerViewSearch.adapter as SearchAdapter).apply {
             this.unFilteredList = realm.copyFromRealm(items)
             this.filteredList = unFilteredList.filter { searchVo ->
-                searchVo.recentSearchWord.toLowerCase().contains(addItem.recentSearchWord)
+                searchVo.recentSearchWord.toLowerCase().contains(this.currentText)
             }.toMutableList()
         }
 
@@ -113,8 +114,23 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }, Realm.Transaction.OnSuccess {
-            realm.refresh()
-            updateAdapterItems(addItem)
+            updateAdapterItems()
         })
+    }
+
+    override fun onDeleteItemClicked(v: View, position: Int) {
+        val adapter = (recyclerViewSearch.adapter as SearchAdapter)
+        val deleteItem = adapter.filteredList[position]
+        realm.executeTransactionAsync(Realm.Transaction { realm ->
+            val searchVo: SearchVo? = realm.where(SearchVo::class.java)
+                .equalTo("id", deleteItem.id)
+                .findFirst()
+
+            realm.copyFromRealm(searchVo)
+            searchVo?.deleteFromRealm()
+        },
+            Realm.Transaction.OnSuccess {
+                updateAdapterItems()
+            })
     }
 }

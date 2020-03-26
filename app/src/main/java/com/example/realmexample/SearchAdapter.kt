@@ -24,7 +24,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Filter
 import android.widget.Filterable
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.realmexample.OnDeleteItemClickedListener
 import com.example.realmexample.R
 import com.example.realmexample.SearchVo
 import kotlinx.android.synthetic.main.item_recyclerview_textview.view.*
@@ -32,7 +34,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 
-class SearchAdapter(items: MutableList<SearchVo>) : RecyclerView.Adapter<RecyclerView.ViewHolder>(),
+class SearchAdapter(items: MutableList<SearchVo>, private val onDeleteItemClickedListener: OnDeleteItemClickedListener) : RecyclerView.Adapter<RecyclerView.ViewHolder>(),
     Filterable {
 
     var unFilteredList: MutableList<SearchVo> = items
@@ -109,12 +111,15 @@ class SearchAdapter(items: MutableList<SearchVo>) : RecyclerView.Adapter<Recycle
         itemView: View
     ) : RecyclerView.ViewHolder(itemView) {
 
-        private val textViewSearchWord = itemView.textViewRecentSearchWord
+        private val textViewSearchWord  = itemView.textViewRecentSearchWord
         private val textViewWriteAt = itemView.textViewWriteAt
+        private val buttonDelete = itemView.buttonDelete
 
-//        init {
-//
-//        }
+        init{
+            buttonDelete.setOnClickListener {
+                onDeleteItemClickedListener.onDeleteItemClicked(it, adapterPosition)
+            }
+        }
 
         fun bindData(item: SearchVo) {
             val recentSearchWord : String = item.recentSearchWord
